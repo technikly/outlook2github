@@ -43,16 +43,21 @@ def download_ics(url: str) -> Calendar:
     return Calendar.from_ical(resp.content)
 
 
+def _clone(component):
+    """Return a detached copy of an icalendar component."""
+    return component.__class__.from_ical(component.to_ical())
+
+
 def filter_recent_events(cal: Calendar, threshold: _dt.datetime) -> Calendar:
     """Return a new calendar containing only events starting after ``threshold``."""
     new_cal = Calendar()
     for prop, val in cal.property_items():
         new_cal.add(prop, val)
 
-    for component in cal.walk():
+    # Iterate over top-level components to avoid mutating the source calendar
+    for component in list(cal.subcomponents):
         if component.name != "VEVENT":
-            if component.name not in {"VCALENDAR"}:
-                new_cal.add_component(component)
+            new_cal.add_component(_clone(component))
             continue
 
         dtstart = component.decoded("DTSTART")
@@ -64,7 +69,7 @@ def filter_recent_events(cal: Calendar, threshold: _dt.datetime) -> Calendar:
             if dtstart < threshold.date():
                 continue
 
-        new_cal.add_component(component)
+        new_cal.add_component(_clone(component))
 
     return new_cal
 
