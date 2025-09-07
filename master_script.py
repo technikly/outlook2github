@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 master_script.py
-Merge enabled calendars (merge_calendars.py) then push the combined feed to
-GitHub (push_to_github.py).
+Merge enabled calendars (merge_calendars.py), push the combined feed to GitHub
+(push_to_github.py), and refresh individual calendars (download_calendars.py).
 
 The script is path-independent: it always works out where it lives and calls the
 helper scripts from that same directory.
@@ -14,6 +14,7 @@ import sys
 HERE = Path(__file__).resolve().parent
 MERGE_SCRIPT = HERE / "merge_calendars.py"
 PUSH_SCRIPT  = HERE / "push_to_github.py"
+DOWNLOAD_SCRIPT = HERE / "download_calendars.py"
 OUTPUT_FILE  = HERE / "combined.ics"
 
 def run(cmd: list[str]) -> None:
@@ -30,7 +31,10 @@ def main() -> None:
     # 2. Push the merged file to GitHub
     run([sys.executable, str(PUSH_SCRIPT), "--file", str(OUTPUT_FILE)])
 
-    print("🎉 Calendar merge and GitHub push completed successfully.")
+    # 3. Refresh individual calendar feeds
+    run([sys.executable, str(DOWNLOAD_SCRIPT)])
+
+    print("🎉 Calendar merge, push, and download completed successfully.")
 
 if __name__ == "__main__":
     main()
