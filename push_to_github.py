@@ -6,31 +6,38 @@ Upload (create-or-update) a file in a GitHub repository using the REST API v3.
 Usage:
     python3 push_to_github.py  --file combined.ics
 Dependencies:
-    pip install requests
+    pip install requests python-dotenv
 Config:
-    Expects a file called config.json in the same directory with:
-    {
-      "token"      : "<PAT with repo scope>",
-      "repository" : "username/reponame",
-      "branch"     : "main",
-      "path"       : "calendars/combined.ics",
-      "commit_msg" : "Update merged calendar"
-    }
+    Reads the following environment variables (e.g. from a .env file):
+        GITHUB_TOKEN       - required Personal Access Token with repo scope
+        GITHUB_REPOSITORY  - required "username/reponame"
+        GITHUB_BRANCH      - optional branch name (default: main)
+        GITHUB_PATH        - optional path in repo (default: combined.ics)
+        GITHUB_COMMIT_MSG  - optional commit message (default: Update file)
 """
 from base64 import b64encode
 from pathlib import Path
 import argparse
-import json
+import os
 import sys
+from dotenv import load_dotenv
 import requests
 
-CONFIG_PATH = Path(__file__).with_name("config.json")
 
-def load_config(path: Path) -> dict:
-    if not path.is_file():
-        sys.exit(f"❌ Cannot find {path}")
-    with path.open(encoding="utf-8") as fh:
-        return json.load(fh)
+def load_config() -> dict:
+    load_dotenv()
+    cfg = {
+        "token": os.getenv("GITHUB_TOKEN"),
+        "repository": os.getenv("GITHUB_REPOSITORY"),
+        "branch": os.getenv("GITHUB_BRANCH", "main"),
+        "path": os.getenv("GITHUB_PATH"),
+        "commit_msg": os.getenv("GITHUB_COMMIT_MSG", "Update file"),
+    }
+    if not cfg["token"]:
+        sys.exit("❌ Missing GITHUB_TOKEN")
+    if not cfg["repository"]:
+        sys.exit("❌ Missing GITHUB_REPOSITORY")
+    return cfg
 
 def github_request(method: str, url: str, token: str, **kwargs):
     headers = kwargs.pop("headers", {})
@@ -47,7 +54,7 @@ def push_file(cfg: dict, local_file: Path) -> None:
 
     repo   = cfg["repository"]
     branch = cfg.get("branch", "main")
-    remote_path = cfg.get("path", local_file.name).lstrip("/")
+    remote_path = (cfg.get("path") or local_file.name).lstrip("/")
     token  = cfg["token"]
     url    = f"https://api.github.com/repos/{repo}/contents/{remote_path}"
 
@@ -79,7 +86,7 @@ def main():
                     help="Local file to upload (default: combined.ics)")
     args = ap.parse_args()
 
-    cfg = load_config(CONFIG_PATH)
+    cfg = load_config()
     push_file(cfg, args.file)
 
 if __name__ == "__main__":
