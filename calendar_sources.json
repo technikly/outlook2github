@@ -1,0 +1,44 @@
+[
+  {
+    "Name": "Subject Release",
+    "URL": "https://outlook.office365.com/owa/calendar/b49f87e7266340e093ac2c81bba5720a@shirley.cambs.sch.uk/35ee2788ad2e4212beb1f50fc7754f463376871987514509979/calendar.ics",
+    "Prefix": "[PPA]: ",
+    "Enabled": true
+  },
+  {
+    "Name": "Monitoring And Assessment:",
+    "URL": "Monitoring And Assessment:https://outlook.office365.com/owa/calendar/b49f87e7266340e093ac2c81bba5720a@shirley.cambs.sch.uk/0aa7ccd368314ae59fcca8fb72dbcc579030004961809962691/calendar.ics",
+    "Prefix": "📝 ",
+    "Enabled": true
+  },
+  {
+    "Name": "Assembly:",
+    "URL": "https://outlook.office365.com/owa/calendar/b49f87e7266340e093ac2c81bba5720a@shirley.cambs.sch.uk/6e2e65574b3540e3bd45a2b981fa0aa7223385435936104718/calendar.ics",
+    "Prefix": "Assembly: ",
+    "Enabled": true
+  },
+  {
+    "Name": "Duties",
+    "URL": "https://outlook.office365.com/owa/calendar/b49f87e7266340e093ac2c81bba5720a@shirley.cambs.sch.uk/f60bcba4511f428ba3839269853fd29110877381871608848557/calendar.ics",
+    "Prefix": "Duties: ",
+    "Enabled": false
+  },
+  {
+    "Name": "Abs",
+    "URL": "https://outlook.office365.com/owa/calendar/b49f87e7266340e093ac2c81bba5720a@shirley.cambs.sch.uk/71fc2620b67a4fe596f13198b04bf90a16722770794834067621/calendar.ics",
+    "Prefix": "👤 ",
+    "Enabled": true
+  },
+  {
+    "Name": "CPD",
+    "URL": "https://outlook.office365.com/owa/calendar/b49f87e7266340e093ac2c81bba5720a@shirley.cambs.sch.uk/302aad083be84d059c76c7731cf9fafa14986383662053392717/calendar.ics",
+    "Prefix": "[CPD]: ",
+    "Enabled": true
+  },
+  {
+    "Name": "Event",
+    "URL": "https://outlook.office365.com/owa/calendar/b49f87e7266340e093ac2c81bba5720a@shirley.cambs.sch.uk/3925ee372f3a4db290bf2d97ef5e8a8518400361833427574850/calendar.ics",
+    "Prefix": "📅 ",
+    "Enabled": true
+  }
+]
