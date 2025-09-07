@@ -81,7 +81,14 @@ def main(json_path: Path, local_folder: Path) -> None:
     local_folder.mkdir(parents=True, exist_ok=True)
 
     cfg = load_config()
-    base_remote = cfg.get("path", str(local_folder))
+    # ``GITHUB_PATH`` may point to a file (e.g. "calendars/combined.ics").
+    # When uploading individual calendars we need just the directory portion,
+    # otherwise the GitHub API will complain that a file exists where a
+    # subdirectory is expected.  If no path is configured, default to the
+    # provided local folder.
+    base_remote = Path(cfg.get("path", local_folder))
+    if base_remote.suffix:
+        base_remote = base_remote.parent
     week_ago = _dt.datetime.now(_dt.UTC) - _dt.timedelta(days=7)
 
     for src in sources:
@@ -109,7 +116,7 @@ def main(json_path: Path, local_folder: Path) -> None:
             fh.write(cleaned.to_ical())
         print(f"   Saved {local_path}")
 
-        cfg["path"] = f"{base_remote.rstrip('/')}/{filename}"
+        cfg["path"] = str(base_remote / filename)
         push_file(cfg, local_path)
 
     print("✅ All calendars processed.")
