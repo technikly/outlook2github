@@ -9,7 +9,6 @@ combine their summaries instead of writing duplicate events.
 Key rule updates
 ----------------
 2025‑06‑17  • Preserve the original time‑zone of the first calendar contributing an event.
-2025‑06‑17  • *New*: After all merging logic, **discard any event whose duration exceeds two days** (events up to and including two days remain).
 
 Usage:
     python3 merge_calendars.py  [--json calendar_sources.json]  [--output combined.ics]
@@ -34,7 +33,6 @@ from icalendar import Calendar, Event, vText
 JSON_DEFAULT = "calendar_sources.json"
 OUTPUT_DEFAULT = "combined.ics"
 HEADERS = {"User-Agent": "Calendar-Merger/1.3 (+https://example.com)"}
-MAX_DAYS = 2  # Events longer than this are pruned
 
 ###############################################################################
 # Helper functions
@@ -74,31 +72,6 @@ def event_key(event: Event) -> Tuple[str, str | None, bool]:
         _stringify_dt(dtend) if dtend else None,
         is_all_day,
     )
-
-###############################################################################
-# Duration filter
-###############################################################################
-
-def event_duration_days(event: Event) -> float:
-    """Return the event's duration in days (fractional allowed)."""
-    dtstart = event.decoded("DTSTART")
-
-    if "DTEND" in event:
-        dtend = event.decoded("DTEND")
-    elif "DURATION" in event:
-        dtend = dtstart + event.decoded("DURATION")
-    else:
-        # No end: treat as zero‑length
-        return 0.0
-
-    # For DATE values (all‑day) dtend is exclusive per RFC 5545
-    if isinstance(dtstart, _dt.date) and not isinstance(dtstart, _dt.datetime):
-        duration = (dtend - dtstart).days
-        return float(duration)
-
-    # For DATETIME values
-    delta = dtend - dtstart
-    return delta.total_seconds() / 86400.0
 
 ###############################################################################
 # Main merge routine
@@ -141,10 +114,6 @@ def main(json_path: Path, output_path: Path) -> None:
 
             new_event = Event.from_ical(component.to_ical())
 
-            # Filter overlong events (strictly more than MAX_DAYS)
-            if event_duration_days(new_event) > MAX_DAYS:
-                continue
-
             # Prefix the summary
             summary = new_event.get("summary", vText(""))
             prefixed_summary = summary if str(summary).startswith(prefix) else f"{prefix}{summary}"
@@ -174,9 +143,8 @@ def main(json_path: Path, output_path: Path) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
-            "Merge multiple .ics feeds, deduplicating events with identical timing, "
-            f"discarding events longer than {MAX_DAYS} days, and preserving the original "
-            "time‑zone of the first event encountered."
+            "Merge multiple .ics feeds, deduplicating events with identical timing and "
+            "preserving the original time‑zone of the first event encountered."
         )
     )
     parser.add_argument("--json", default=JSON_DEFAULT, type=Path,
