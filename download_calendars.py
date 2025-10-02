@@ -79,11 +79,19 @@ def slugify(name: str) -> str:
     return "".join(ch if ch.isalnum() else "_" for ch in name).strip("_")
 
 
+def get_untouched_calendar_folder(base_folder: Path) -> Path:
+    """Return the folder used to store untouched calendar downloads."""
+    untouched_folder = base_folder / "untouched"
+    untouched_folder.mkdir(parents=True, exist_ok=True)
+    return untouched_folder
+
+
 def main(json_path: Path, local_folder: Path) -> None:
     with json_path.open(encoding="utf-8") as fh:
         sources = json.load(fh)
 
     local_folder.mkdir(parents=True, exist_ok=True)
+    untouched_folder = get_untouched_calendar_folder(local_folder)
 
     cfg = load_config()
     # ``GITHUB_PATH`` may point to a file (e.g. "calendars/combined.ics").
@@ -114,8 +122,13 @@ def main(json_path: Path, local_folder: Path) -> None:
             print(f"   Failed ({e!s}); skipping.", file=sys.stderr)
             continue
 
-        cleaned = filter_recent_events(cal, week_ago)
         filename = f"{slugify(name)}.ics"
+        untouched_path = untouched_folder / filename
+        with untouched_path.open("wb") as fh:
+            fh.write(cal.to_ical())
+        print(f"   Saved untouched copy {untouched_path}")
+
+        cleaned = filter_recent_events(cal, week_ago)
         local_path = local_folder / filename
         with local_path.open("wb") as fh:
             fh.write(cleaned.to_ical())
