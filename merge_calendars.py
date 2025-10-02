@@ -61,16 +61,28 @@ def _stringify_dt(dt_obj):
     return dt_obj.isoformat()
 
 
-def event_key(event: Event) -> Tuple[str, str | None, bool]:
-    """Return a hashable key identifying an event’s timing."""
+def event_key(event: Event) -> Tuple[str, str | None, bool, str | None]:
+    """Return a hashable key identifying an event’s timing.
+
+    Recurring events sometimes include a RECURRENCE-ID. Outlook emits a
+    separate VEVENT per modified occurrence, each sharing the same DTSTART as
+    the parent series.  Without considering RECURRENCE-ID we mistakenly treat
+    those adjusted instances as duplicates and drop them.  Including the
+    (stringified) recurrence identifier keeps each amended occurrence distinct
+    while still deduplicating identical events across calendars.
+    """
     dtstart = event.decoded("DTSTART")
     dtend = event.decoded("DTEND") if "DTEND" in event else None
 
     is_all_day = not isinstance(dtstart, _dt.datetime)
+    recurrence_id = None
+    if "RECURRENCE-ID" in event:
+        recurrence_id = _stringify_dt(event.decoded("RECURRENCE-ID"))
     return (
         _stringify_dt(dtstart),
         _stringify_dt(dtend) if dtend else None,
         is_all_day,
+        recurrence_id,
     )
 
 ###############################################################################
@@ -85,7 +97,7 @@ def main(json_path: Path, output_path: Path) -> None:
     merged.add("prodid", "-//Merged via merge_calendars.py//EN")
     merged.add("version", "2.0")
 
-    seen_events: Dict[Tuple[str, str | None, bool], Event] = {}
+    seen_events: Dict[Tuple[str, str | None, bool, str | None], Event] = {}
 
     for src in sources:
         if not src.get("Enabled", False):
