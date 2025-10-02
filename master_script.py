@@ -50,6 +50,7 @@ HEADERS_DL = {"User-Agent": "Calendar-Sync/2.0 (+outlook2github)"}
 # Defaults that match your current repo layout / scripts
 JSON_SOURCES_DEFAULT = HERE / "calendar_sources.json"
 CAL_FOLDER_DEFAULT   = HERE / "calendars"
+UNTOUCHED_FOLDER_DEFAULT = HERE / "calendars_untouched"
 
 
 # ----------------------------- helpers: shell --------------------------------
@@ -127,6 +128,15 @@ def _clone(component):
     return component.__class__.from_ical(component.to_ical())
 
 
+def save_untouched_calendar(cal: Calendar, dest_folder: Path, filename: str) -> Path:
+    """Store a pristine copy of the downloaded calendar without any filtering."""
+    dest_folder.mkdir(parents=True, exist_ok=True)
+    untouched_path = dest_folder / filename
+    with untouched_path.open("wb") as fh:
+        fh.write(cal.to_ical())
+    return untouched_path
+
+
 def filter_recent_events(cal: Calendar, threshold: _dt.datetime) -> Calendar:
     """Keep only events starting after threshold (UTC-aware)."""
     new_cal = Calendar()
@@ -184,8 +194,9 @@ def refresh_individual_calendars(json_path: Path, local_folder: Path):
             print(f"   Failed ({e!s}); skipping.", file=sys.stderr)
             continue
 
-        cleaned = filter_recent_events(cal, week_ago)
         filename = f"{slugify(name)}.ics"
+        save_untouched_calendar(cal, UNTOUCHED_FOLDER_DEFAULT, filename)
+        cleaned = filter_recent_events(cal, week_ago)
         local_path = local_folder / filename
         with local_path.open("wb") as fh:
             fh.write(cleaned.to_ical())
